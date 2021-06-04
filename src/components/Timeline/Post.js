@@ -171,7 +171,7 @@ export default function Post({ post, getPosts, userId, removePost }) {
                       playerVars: {
                         showinfo: 1,
                         host: "https://www.youtube.com",
-                        origin: window.location.origin,
+                        origin: "https://linkr-pll.vercel.app",
                       },
                     },
                   }}
