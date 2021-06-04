@@ -7,81 +7,89 @@ import StyledTimeline from "../Styles/StyledTimeline";
 import CreatePost from "./CreatePost";
 import PostsList from "./PostsList";
 import useInterval from "../useInterval/useInterval";
-import filterPosts from "../filterPosts/filterPosts";
 
 export default function Timeline() {
   const [posts, setPosts] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(false);
   const [hasMore, setHasMore] = useState(true);
-  const { user, setUser } = useContext(UserContext);
+  const { user } = useContext(UserContext);
 
   useEffect(() => {
-    if (!user) {
-      if (localStorage.user) {
-        const userStorage = JSON.parse(localStorage.user);
-        setUser(userStorage);
-        return;
-      }
+    if (user) {
+      getPosts();
     }
-    getPosts();
   }, [user]);
 
-  function getPosts(newPosts) {
+  function getPosts(earlier, reset) {
     const config = {
       headers: {
         Authorization: `Bearer ${user.token}`,
       },
     };
-
-    if (posts && posts.length > 0 && !newPosts) {
-      const request = axios.get(
-        `https://mock-api.bootcamp.respondeai.com.br/api/v2/linkr/following/posts?olderThan=${
-          posts[posts.length - 1].id
-        }`,
-        config
-      );
-
-      request.then((response) => {
-        if (response.data.posts.length < 10) {
-          setHasMore(false);
+    let url = `https://mock-api.bootcamp.respondeai.com.br/api/v2/linkr/following/posts`;
+    let referenceId;
+    if (!reset) {
+      if (earlier) {
+        if (posts) {
+          referenceId = posts[0].repostId ? posts[0].repostId : posts[0].id;
+          url = `${url}?earlierThan=${referenceId}`;
         }
-        const refreshPosts = [...posts, ...response.data.posts];
-        setPosts(refreshPosts);
-        setIsLoading(false);
-      });
-      request.catch((error) => {
-        setHasMore(false);
-        setIsLoading(false);
-        setError(true);
-      });
-    } else {
-      const request = axios.get(
-        "https://mock-api.bootcamp.respondeai.com.br/api/v2/linkr/following/posts",
-        config
-      );
-
-      request.then((response) => {
-        if (response.data.posts.length < 10) {
-          setHasMore(false);
+      } else {
+        if (posts && posts.length > 0) {
+          referenceId = posts[posts.length - 1].repostId
+            ? posts[posts.length - 1].repostId
+            : posts[posts.length - 1].id;
+          url = `${url}?olderThan=${referenceId}`;
         }
-        if (newPosts) {
-          filterPosts(response.data.posts, posts, setPosts);
-        } else {
-          setPosts(response.data.posts);
-        }
-        setIsLoading(false);
-      });
-      request.catch((error) => {
-        setIsLoading(false);
-        setError(true);
-      });
+      }
     }
+    const request = axios.get(url, config);
+    let refreshPosts;
+    request.then((response) => {
+      if (earlier && !reset) {
+        if (posts) {
+          refreshPosts = [...response.data.posts, ...posts];
+        } else {
+          refreshPosts = [...response.data.posts];
+        }
+      } else {
+        if (reset) {
+          refreshPosts = [...response.data.posts];
+        } else {
+          refreshPosts = posts
+            ? [...posts, ...response.data.posts]
+            : [...response.data.posts];
+        }
+        if (response.data.posts.length < 10) {
+          setHasMore(false);
+        }
+      }
+      setPosts(refreshPosts);
+      setIsLoading(false);
+    });
+
+    request.catch(() => {
+      setHasMore(false);
+      setIsLoading(false);
+      setError(true);
+    });
   }
 
   useInterval(() => {
     getPosts(true);
   }, 15000);
+
+  function removePost(repost, id) {
+    let filteredPosts = [];
+    if (repost) {
+      filteredPosts = posts.filter((p) => p.repostId !== id);
+    } else {
+      filteredPosts = posts.filter((p) => p.id !== id);
+    }
+    const refreshPosts = [...filteredPosts];
+    setPosts(refreshPosts);
+  }
 
   return (
     <StyledTimeline>
@@ -101,7 +109,12 @@ export default function Timeline() {
           ) : posts.length === 0 ? (
             <p className="warning">You still don't follow anyone!</p>
           ) : (
-            <PostsList posts={posts} reload={getPosts} hasMore={hasMore} />
+            <PostsList
+              posts={posts}
+              getPosts={getPosts}
+              hasMore={hasMore}
+              removePost={removePost}
+            />
           )}
         </div>
         <div className="page-right"></div>

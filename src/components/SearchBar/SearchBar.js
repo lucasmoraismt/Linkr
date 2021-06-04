@@ -1,6 +1,6 @@
 import styled from "styled-components";
 import { HiSearch } from "react-icons/hi";
-import React, { useState, useContext, useRef } from "react";
+import React, { useState, useContext } from "react";
 import axios from "axios";
 import { Link } from "react-router-dom";
 
@@ -13,9 +13,8 @@ export default function SearchBar() {
   const [tab, setTab] = useState(false);
   const [input, setInput] = useState(false);
   const [userInput, setUserInput] = useState("");
-
   function searchPeople(text) {
-    if (text.length < 3) {
+    if (text.trim().length < 3) {
       return;
     }
     let param = text;
@@ -55,6 +54,7 @@ export default function SearchBar() {
     setOrderedUsers(null);
     setTab(false);
   }
+
   return (
     <Container>
       <ContainerSupport>
@@ -71,6 +71,7 @@ export default function SearchBar() {
               onBlur={() => {
                 onBlurInput();
               }}
+              onKeyDown={(e) => e.key === "Escape" && e.target.blur()}
               onFocus={onFocusInput}
               debounceTimeout={500}
               onChange={(event) => {
@@ -117,12 +118,19 @@ export default function SearchBar() {
 }
 
 const Container = styled.div`
+  position: fixed;
+  top: 0;
+  left: 50%;
+  transform: translate(-50%, 0);
+  z-index: 3;
   display: flex;
   flex-direction: column;
   align-items: center;
   background-color: #e7e7e7;
-  @media (max-width: 374px) {
-    display: none;
+  @media (max-width: 600px) {
+    position: absolute;
+    top: 70px;
+    z-index: 1;
   }
 `;
 
@@ -130,13 +138,18 @@ const ContainerSupport = styled.div`
   position: absolute;
   top: 12px;
   border-radius: 8px 8px 0 0;
-  //border: 1px solid green;
 `;
 
 const ContainerShow = styled.div`
+  position: absolute;
+  top: 45px;
+  left: 50%;
+  transform: translate(-50%, 0);
   display: ${(props) => (props.inputStatus ? "flex" : "none")};
   flex-direction: column;
   width: 100%;
+  max-height: 70vh;
+  overflow: auto;
   color: #6d6d6d;
   border-radius: 0 0 8px 8px;
   background-color: #e7e7e7;
@@ -171,7 +184,6 @@ const ContainerSearch = styled.div`
   justify-content: center;
   align-items: center;
   border-radius: 8px 8px 0 0;
-  //border: 1px solid red;
 
   .search-input {
     width: 563px;
@@ -196,7 +208,6 @@ const ContainerSearch = styled.div`
   }
 
   > form {
-    //border: 1px solid yellow;
     border-radius: 8px 8px
       ${(props) => (props.inputStatus ? "0px 0px" : "8px 8px")};
     background-color: red;
@@ -234,8 +245,8 @@ const ContainerSearch = styled.div`
       margin-right: 5px;
     }
   }
-  @media (max-width: 560px) {
-    width: 112px;
+  @media (max-width: 600px) {
+    width: calc(100vw - 20px);
   }
 `;
 

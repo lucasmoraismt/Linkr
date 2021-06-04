@@ -15,6 +15,7 @@ import Header from "../Header/Header";
 import HashtagPage from "../HashtagPage/HashtagPage";
 import UserPage from "../UserPage/UserPage";
 import Trending from "../Trending/Trending";
+import SearchBar from "../SearchBar/SearchBar";
 
 export default function App() {
   const [user, setUser] = useState();
@@ -31,26 +32,31 @@ export default function App() {
           </Route>
           <Route path="/timeline" exact>
             <Header />
+            <SearchBar />
             <Timeline />
             <Trending />
           </Route>
           <Route path="/my-posts" exact>
             <Header />
+            <SearchBar />
             <MyPosts />
             <Trending />
           </Route>
           <Route path="/my-likes" exact>
             <Header />
+            <SearchBar />
             <LikedPosts />
             <Trending />
           </Route>
           <Route path="/user/:userId" exact>
             <Header />
+            <SearchBar />
             <UserPage />
             <Trending />
           </Route>
           <Route path="/hashtag/:hashtag" exact>
             <Header />
+            <SearchBar />
             <HashtagPage />
             <Trending />
           </Route>

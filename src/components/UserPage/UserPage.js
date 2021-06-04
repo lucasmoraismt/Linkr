@@ -9,7 +9,6 @@ import PostsList from "../Timeline/PostsList";
 
 import styled from "styled-components";
 import useInterval from "../useInterval/useInterval";
-import filterPosts from "../filterPosts/filterPosts";
 
 export default function UserPage() {
   const [posts, setPosts] = useState();
@@ -17,7 +16,7 @@ export default function UserPage() {
   const [hasMore, setHasMore] = useState(true);
   const [error, setError] = useState(false);
   const [userInfo, setUserInfo] = useState(null);
-  const { user, setUser } = useContext(UserContext);
+  const { user } = useContext(UserContext);
   const { userId } = useParams();
 
   const [displayButton, setDisplayButton] = useState(true);
@@ -25,20 +24,89 @@ export default function UserPage() {
   const [loadingFollow, setLoadingFollow] = useState(false);
 
   useEffect(() => {
-    if (!user) {
-      if (localStorage.user) {
-        const userStorage = JSON.parse(localStorage.user);
-        setUser(userStorage);
-        return;
+    if (user) {
+      if (user.id === Number(userId)) {
+        setDisplayButton(false);
+      }
+      setIsLoading(true);
+      setUserInfo("");
+      setPosts();
+      getInfo();
+      getPosts();
+      getFollows();
+    }
+  }, [user]);
+
+  useEffect(() => {
+    if (user) {
+      setIsLoading(true);
+      getInfo();
+      getFollows();
+      getPosts(true, true);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  }, [userId]);
+
+  function getPosts(earlier, reset) {
+    const config = {
+      headers: {
+        Authorization: `Bearer ${user.token}`,
+      },
+    };
+    let url = `https://mock-api.bootcamp.respondeai.com.br/api/v2/linkr/users/${userId}/posts`;
+    let referenceId;
+    if (!reset) {
+      if (earlier) {
+        if (posts) {
+          referenceId = posts[0].repostId ? posts[0].repostId : posts[0].id;
+          url = `${url}?earlierThan=${referenceId}`;
+        }
+      } else {
+        if (posts && posts.length > 0) {
+          referenceId = posts[posts.length - 1].repostId
+            ? posts[posts.length - 1].repostId
+            : posts[posts.length - 1].id;
+          url = `${url}?olderThan=${referenceId}`;
+        }
       }
     }
-    if (user.id === Number(userId)) {
-      setDisplayButton(false);
+    const request = axios.get(url, config);
+    let refreshPosts;
+    request.then((response) => {
+      if (earlier && !reset) {
+        if (posts) {
+          refreshPosts = [...response.data.posts, ...posts];
+        } else {
+          refreshPosts = [...response.data.posts];
+        }
+      } else {
+        if (reset) {
+          refreshPosts = [...response.data.posts];
+        } else {
+          refreshPosts = posts
+            ? [...posts, ...response.data.posts]
+            : [...response.data.posts];
+        }
+        if (response.data.posts.length < 10) {
+          setHasMore(false);
+        }
+      }
+      setPosts(refreshPosts);
+      setIsLoading(false);
+    });
+
+    request.catch(() => {
+      setHasMore(false);
+      setIsLoading(false);
+      setError(true);
+    });
+  }
+
+  useInterval(() => {
+    if (hasMore) {
+      getPosts(true);
     }
-    getInfo();
-    getPosts();
-    getFollows();
-  }, [user, userId]);
+  }, 15000);
 
   function getInfo() {
     const config = {
@@ -46,78 +114,17 @@ export default function UserPage() {
         Authorization: `Bearer ${user.token}`,
       },
     };
-
     const request = axios.get(
       `https://mock-api.bootcamp.respondeai.com.br/api/v2/linkr/users/${userId}`,
       config
     );
-
     request.then((response) => {
       setUserInfo(response.data.user);
-      setIsLoading(false);
     });
     request.catch((error) => {
-      setIsLoading(false);
-      setError(true);
       alert(error.response.data.message);
     });
   }
-
-  function getPosts(newPosts) {
-    const config = {
-      headers: {
-        Authorization: `Bearer ${user.token}`,
-      },
-    };
-
-    if (posts && posts.length > 0 && !newPosts) {
-      const request = axios.get(
-        `https://mock-api.bootcamp.respondeai.com.br/api/v2/linkr/users/${userId}/posts?olderThan=${
-          posts[posts.length - 1].id
-        }`,
-        config
-      );
-
-      request.then((response) => {
-        if (response.data.posts.length < 10) {
-          setHasMore(false);
-        }
-        const refreshPosts = [...posts, ...response.data.posts];
-        setPosts(refreshPosts);
-        setIsLoading(false);
-      });
-      request.catch((error) => {
-        setHasMore(false);
-        setIsLoading(false);
-        setError(true);
-      });
-    } else {
-      const request = axios.get(
-        `https://mock-api.bootcamp.respondeai.com.br/api/v2/linkr/users/${userId}/posts`,
-        config
-      );
-
-      request.then((response) => {
-        if (response.data.posts.length < 10) {
-          setHasMore(false);
-        }
-        if (newPosts) {
-          filterPosts(response.data.posts, posts, setPosts);
-        } else {
-          setPosts(response.data.posts);
-        }
-        setIsLoading(false);
-      });
-      request.catch((error) => {
-        setIsLoading(false);
-        setError(true);
-      });
-    }
-  }
-
-  useInterval(() => {
-    getPosts(true);
-  }, 15000);
 
   function getFollows() {
     const config = {
@@ -125,12 +132,10 @@ export default function UserPage() {
         Authorization: `Bearer ${user.token}`,
       },
     };
-
     const request = axios.get(
       `https://mock-api.bootcamp.respondeai.com.br/api/v2/linkr/users/follows`,
       config
     );
-
     request.then((response) => {
       const userFollows = response.data.users.filter(
         (item) => item.id === Number(userId)
@@ -141,12 +146,10 @@ export default function UserPage() {
         setFollowing(false);
       }
     });
-
     request.catch((error) => {
       alert(error.response.data.message);
     });
   }
-
   function follow() {
     setLoadingFollow(true);
     const config = {
@@ -154,13 +157,11 @@ export default function UserPage() {
         Authorization: `Bearer ${user.token}`,
       },
     };
-
     const request = axios.post(
       `https://mock-api.bootcamp.respondeai.com.br/api/v2/linkr/users/${userId}/follow`,
       {},
       config
     );
-
     request.then(() => {
       setFollowing(true);
       setLoadingFollow(false);
@@ -170,7 +171,6 @@ export default function UserPage() {
       alert(`Operation not possible due to ${error.response.data.message}.`);
     });
   }
-
   function unfollow() {
     setLoadingFollow(true);
     const config = {
@@ -178,13 +178,11 @@ export default function UserPage() {
         Authorization: `Bearer ${user.token}`,
       },
     };
-
     const request = axios.post(
       `https://mock-api.bootcamp.respondeai.com.br/api/v2/linkr/users/${userId}/unfollow`,
       {},
       config
     );
-
     request.then(() => {
       setFollowing(false);
       setLoadingFollow(false);
@@ -194,49 +192,37 @@ export default function UserPage() {
       setLoadingFollow(false);
     });
   }
-
-  function getInfo() {
-    const config = {
-      headers: {
-        Authorization: `Bearer ${user.token}`,
-      },
-    };
-
-    const request = axios.get(
-      `https://mock-api.bootcamp.respondeai.com.br/api/v2/linkr/users/${userId}`,
-      config
-    );
-
-    request.then((response) => {
-      setUserInfo(response.data.user);
-    });
-    request.catch((error) => {
-      alert(error.response.data.message);
-    });
+  function removePost(repost, id) {
+    let filteredPosts = [];
+    if (repost) {
+      filteredPosts = posts.filter((p) => p.repostId !== id);
+    } else {
+      filteredPosts = posts.filter((p) => p.id !== id);
+    }
+    const refreshPosts = [...filteredPosts];
+    setPosts(refreshPosts);
   }
-
   return (
     <StyledTimeline>
-      <h1 className="userpagefix">
-        <Introduction>
-          <div>
-            <Avatar url={userInfo && userInfo.avatar} />
-            {userInfo && <h1>{userInfo.username}'s posts</h1>}
-          </div>
-          <FollowButton
-            onClick={following ? unfollow : follow}
-            followinguser={following}
-            show={displayButton}
-            disabled={loadingFollow}
-          >
-            {following ? "Unfollow" : "Follow"}
-          </FollowButton>
-        </Introduction>
-      </h1>
+      <Introduction>
+        <div>
+          <Avatar url={userInfo && userInfo.avatar} />
+          {userInfo && <h1>{userInfo.username}'s posts</h1>}
+        </div>
+        <FollowButton
+          onClick={following ? unfollow : follow}
+          followinguser={following}
+          show={displayButton}
+          disabled={loadingFollow}
+        >
+          {following ? "Unfollow" : "Follow"}
+        </FollowButton>
+      </Introduction>
       <div className="main-content">
         <div className="page-left">
-          {isLoading ? <Loading /> : ""}
-          {posts === null || posts === undefined ? (
+          {isLoading ? (
+            <Loading />
+          ) : posts === null || posts === undefined ? (
             error ? (
               <p className="warning">
                 Could not get posts right now. Please try again.
@@ -247,7 +233,12 @@ export default function UserPage() {
           ) : posts.length === 0 ? (
             <p className="warning">This person has not posted yet!</p>
           ) : (
-            <PostsList posts={posts} reload={getPosts} hasMore={hasMore} />
+            <PostsList
+              posts={posts}
+              getPosts={getPosts}
+              hasMore={hasMore}
+              removePost={removePost}
+            />
           )}
         </div>
         <div className="page-right"></div>
@@ -260,6 +251,7 @@ const Introduction = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
+  margin-bottom: 44px;
 
   > div {
     display: flex;
@@ -296,6 +288,10 @@ const Introduction = styled.div`
     button {
       margin-right: 10px;
     }
+  }
+  @media (max-width: 600px) {
+    flex-direction: column;
+    margin-bottom: 10px;
   }
 `;
 

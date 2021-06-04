@@ -47,9 +47,9 @@ export default function CreatePost({ getPosts, user }) {
       setUrl("");
       setText("");
       setIsLoading(false);
-      getPosts();
+      getPosts(true);
     });
-    createPostRequest.catch((error) => {
+    createPostRequest.catch(() => {
       alert("There was an error publishing your link");
       setIsLoading(false);
     });

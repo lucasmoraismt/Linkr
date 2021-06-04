@@ -1,17 +1,18 @@
 import ReactHashtag from "react-hashtag";
-import React, { useState } from "react";
+import { useState } from "react";
+import { Link } from "react-router-dom";
+import { BiRepost } from "react-icons/bi";
 
 import PostStyle from "../Styles/PostStyle";
 
 import EditButton from "./EditButton";
 import DeleteButton from "./DeleteButton";
+import RepostButton from "./RepostButton";
 import EditArea from "./EditArea";
-
 import Likes from "../Likes/Likes";
 import CommentsButton from "../Comments/CommentsButton";
 import CommentsSection from "../Comments/CommentsSection";
 import LocationIndicator from "./LocationIndicator";
-import { Link } from "react-router-dom";
 
 import styled from "styled-components";
 import "./ModalStyle.css";
@@ -22,7 +23,7 @@ import ReactPlayer from "react-player/youtube";
 
 Modal.setAppElement("#root");
 
-export default function Post({ post, reload }) {
+export default function Post({ post, getPosts, userId, removePost }) {
   const {
     linkImage,
     linkTitle,
@@ -39,7 +40,9 @@ export default function Post({ post, reload }) {
   const [loadedComments, setLoadedComments] = useState(false);
   const [alteredText, setAlteredText] = useState(text);
   const [error, setError] = useState(false);
-  const [counter, setCounter] = useState(post.commentCount);
+  const [modalIsOpen, setIsOpen] = useState(false);
+  const [commentCounter, setCommentCounter] = useState(post.commentCount);
+
   function editToggle() {
     if (isLoading) {
       return;
@@ -51,9 +54,6 @@ export default function Post({ post, reload }) {
       setIsEditing(true);
     }
   }
-
-  var subtitle;
-  const [modalIsOpen, setIsOpen] = React.useState(false);
 
   function openModal() {
     setIsOpen(true);
@@ -69,6 +69,25 @@ export default function Post({ post, reload }) {
       image={linkImage}
       showingComments={showingComments}
     >
+      {post.repostId && (
+        <div className="repost">
+          <div>
+            <BiRepost />
+            Reposted by{" "}
+            <Link to={`/user/${post.repostedBy.id}`}>
+              {post.repostedBy.id === userId ? "you" : post.repostedBy.username}
+            </Link>
+          </div>
+          {post.repostedBy.id === userId && (
+            <DeleteButton
+              postId={post.repostId}
+              userId={post.repostedBy.id}
+              repost={true}
+              removePost={removePost}
+            />
+          )}
+        </div>
+      )}
       <div className="post-content">
         <div className="post-left">
           <Link className="user-image" to={`/user/${user.id}`}>
@@ -77,12 +96,13 @@ export default function Post({ post, reload }) {
           <Likes post={post}></Likes>
           <CommentsButton
             post={post}
-            counter={counter}
+            counter={commentCounter}
             loadedComments={loadedComments}
             setLoadedComments={setLoadedComments}
             showingComments={showingComments}
             setShowingComments={setShowingComments}
           />
+          <RepostButton post={post} getPosts={getPosts} />
         </div>
         <div className="post-right">
           <div className="top">
@@ -105,7 +125,12 @@ export default function Post({ post, reload }) {
                 setError={setError}
                 setIsEditing={setIsEditing}
               />
-              <DeleteButton postId={id} userId={user.id} reload={reload} />
+              <DeleteButton
+                postId={id}
+                userId={user.id}
+                removePost={removePost}
+                repost={false}
+              />
             </div>
           </div>
           <p className="user-text">
@@ -175,27 +200,21 @@ export default function Post({ post, reload }) {
                   ></iframe>
                 </Preview>
               </Modal>
-              <a
-                href={link}
-                className="link"
-                target="_blank"
-                rel="noreferrer"
-                onMouseDown={openModal}
-              >
+              <div className="link" onClick={openModal}>
                 <div className="texts">
                   <p className="link-title">{linkTitle}</p>
                   <p className="link-description">{linkDescription}</p>
                   <p className="link-url">{link}</p>
                 </div>
                 <div className="image"></div>
-              </a>
+              </div>
             </>
           )}
         </div>
       </div>
       <div className="comment-section">
         {loadedComments ? (
-          <CommentsSection post={post} setCounter={setCounter} />
+          <CommentsSection post={post} setCounter={setCommentCounter} />
         ) : null}
       </div>
     </PostStyle>
@@ -207,14 +226,12 @@ const Preview = styled.div`
   justify-content: center;
   align-items: center;
   padding: 0 16px;
-
   .i-frame {
     background: white;
     width: 100%;
     height: 520px;
     margin-bottom: 20px;
   }
-
   @media (max-width: 780px) {
     margin-top: 10px;
     margin-bottom: 30px;
@@ -227,7 +244,6 @@ const Top = styled.div`
   align-items: center;
   width: 100%;
   padding: 10px 0;
-
   a {
     width: 138px;
     height: 31px;
@@ -237,15 +253,17 @@ const Top = styled.div`
     align-items: center;
     justify-content: center;
   }
+  svg {
+    cursor: pointer;
+  }
 `;
 
 const VideoPlayer = styled.div`
   display: flex;
   flex-direction: column;
   height: 280px;
-  width: 500px;
   overflow: hidden;
-
+  margin-bottom: 5px;
   @media (max-width: 740px) {
     width: 100%;
     height: calc((100vw - 100px) * 0.56);

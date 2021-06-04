@@ -1,6 +1,6 @@
 import axios from "axios";
 import styled from "styled-components";
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import UserContext from "../../contexts/UserContexts";
 import CreateComment from "./CreateComment";
 import Avatar from "./Avatar";
@@ -10,6 +10,8 @@ export default function CommentSection({ post, setCounter }) {
   const { user } = useContext(UserContext);
   const [comments, setComments] = useState([]);
   const [following, setFollowing] = useState([]);
+  const commentsRef = useRef();
+  const inputRef = useRef();
 
   useEffect(() => {
     getComments();
@@ -29,6 +31,7 @@ export default function CommentSection({ post, setCounter }) {
     commentsRequest.then((response) => {
       setComments(response.data.comments);
       setCounter(response.data.comments.length);
+      focusComments();
     });
     commentsRequest.catch(() => {
       alert("Could not get comments");
@@ -46,7 +49,7 @@ export default function CommentSection({ post, setCounter }) {
       config
     );
     followingRequest.then((response) => {
-      const ids = response.data.users.map(user => user.id)
+      const ids = response.data.users.map((user) => user.id);
       setFollowing(ids);
     });
     followingRequest.catch(() => {
@@ -54,9 +57,22 @@ export default function CommentSection({ post, setCounter }) {
     });
   }
 
+  function focusComments() {
+    commentsRef.current.scrollTo({
+      top: commentsRef.current.scrollHeight,
+      behavior: "smooth",
+    });
+    setTimeout(() => {
+      inputRef.current.scrollIntoView({
+        behavior: "smooth",
+        block: "nearest",
+        inline: "start",
+      });
+    }, 500);
+  }
   return (
     <StyledCommentsSection initial={!comments.length}>
-      <div className="comments">
+      <div ref={commentsRef} className="comments">
         {comments.length === 0 ? (
           post.commentCount !== 0 ? (
             <div className="comment-box">Loading...</div>
@@ -75,7 +91,10 @@ export default function CommentSection({ post, setCounter }) {
                   <Link to={`/user/${comment.user.id}`}>
                     {comment.user.username}
                   </Link>
-                  <span>{(post.user.id === comment.user.id) && " • post's author"}{(following.includes(comment.user.id)) && " • following"}</span>
+                  <span>
+                    {post.user.id === comment.user.id && " • post's author"}
+                    {following.includes(comment.user.id) && " • following"}
+                  </span>
                 </p>
                 <p className="comment">{comment.text}</p>
               </div>
@@ -83,7 +102,11 @@ export default function CommentSection({ post, setCounter }) {
           );
         })}
       </div>
-      <CreateComment post={post} getComments={getComments} />
+      <CreateComment
+        inputRef={inputRef}
+        post={post}
+        getComments={getComments}
+      />
     </StyledCommentsSection>
   );
 }

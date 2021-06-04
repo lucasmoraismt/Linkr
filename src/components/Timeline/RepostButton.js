@@ -1,65 +1,65 @@
-import { useContext, useState } from "react";
-import { FaTrash } from "react-icons/fa";
+import { BiRepost } from "react-icons/bi";
 import styled from "styled-components";
 import UserContext from "../../contexts/UserContexts";
 import axios from "axios";
 import Modal from "react-modal";
 import "./ModalStyle.css";
+import { useContext, useState } from "react";
 
 Modal.setAppElement("#root");
 
-export default function DeleteButton({ postId, userId, repost, removePost }) {
+export default function RepostButton({ post, getPosts }) {
   const { user } = useContext(UserContext);
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(false);
 
-  function toggleModal() {
-    setIsOpen(!isOpen);
-  }
-
-  function deletePost() {
+  function repostPost() {
     const config = {
       headers: {
         Authorization: `Bearer ${user.token}`,
       },
     };
-    const deletePostRequest = axios.delete(
-      `https://mock-api.bootcamp.respondeai.com.br/api/v2/linkr/posts/${postId}`,
+    const repostRequest = axios.post(
+      `https://mock-api.bootcamp.respondeai.com.br/api/v2/linkr/posts/${post.id}/share`,
+      {},
       config
     );
     setIsLoading(true);
-    deletePostRequest.then(() => {
-      toggleModal();
+    repostRequest.then(() => {
+      setIsOpen(false);
       setIsLoading(false);
-      removePost(repost, postId);
+      getPosts(true);
     });
-    deletePostRequest.catch(() => {
+    repostRequest.catch(() => {
       setError(true);
       setIsLoading(false);
     });
   }
 
-  return userId === user.id ? (
+  return (
     <>
-      <TrashButton onClick={toggleModal}>
-        <FaTrash />
-      </TrashButton>
+      <StyledRepostButton onClick={() => setIsOpen(true)}>
+        <BiRepost />
+        <p>
+          {post.repostCount} repost{post.repostCount > 0 ? "s" : null}
+        </p>
+      </StyledRepostButton>
       <Modal
         className="content"
         overlayClassName="overlay"
         isOpen={isOpen}
-        onRequestClose={toggleModal}
+        onRequestClose={() => setIsOpen(false)}
       >
         <ModalContent error={error}>
           {error ? (
             <>
-              <p>Error: Could not delete your post at this time.</p>
+              <p>Error: Could not repost this link at this time.</p>
               <div>
                 <button
                   className="cancel"
                   onClick={() => {
-                    toggleModal();
+                    setIsOpen(false);
                     setError(false);
                   }}
                   disabled={isLoading}
@@ -70,17 +70,20 @@ export default function DeleteButton({ postId, userId, repost, removePost }) {
             </>
           ) : (
             <>
-              <p>Are you sure you want to delete this post?</p>
+              <p>
+                Do you want to re-post <br />
+                this link?
+              </p>
               <div>
                 <button
                   className="cancel"
-                  onClick={toggleModal}
+                  onClick={() => setIsOpen(false)}
                   disabled={isLoading}
                 >
-                  No, go back
+                  No, cancel
                 </button>
-                <button onClick={deletePost} disabled={isLoading}>
-                  {isLoading ? "Deleting..." : "Yes, delete it"}
+                <button onClick={repostPost} disabled={isLoading}>
+                  {isLoading ? "Sharing..." : "Yes, share!"}
                 </button>
               </div>
             </>
@@ -89,17 +92,16 @@ export default function DeleteButton({ postId, userId, repost, removePost }) {
       </Modal>
       {isLoading && <Overlay />}
     </>
-  ) : (
-    ""
   );
 }
 
-const TrashButton = styled.button`
-  display: flex;
-  justify-content: flex-end;
-  background-color: transparent;
-  color: white;
+const StyledRepostButton = styled.button`
+  margin-top: 15px;
+  width: 100%;
+  padding: 0;
   border: none;
+  background-color: transparent;
+  color: inherit;
 `;
 
 const ModalContent = styled.div`
@@ -109,7 +111,7 @@ const ModalContent = styled.div`
     font-weight: bold;
     font-size: 34px;
     line-height: 41px;
-    margin-bottom: 47px;
+    margin: 0px 30px 47px;
   }
   div {
     display: flex;
@@ -138,20 +140,14 @@ const ModalContent = styled.div`
   @media (max-width: 740px) {
     border-radius: 16px;
     p {
-      max-width: 100%;
       font-size: 24px;
-      margin: 0px 35px 47px;
     }
-    div {
-      max-width: 360px;
-      margin: 0px auto;
-      button {
-        width: 134px;
-        margin: 0px 5px;
-      }
+    button {
+      margin: 0px 5px;
     }
   }
 `;
+
 const Overlay = styled.div`
   position: fixed;
   top: 0;

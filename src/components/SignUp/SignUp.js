@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import axios from "axios";
 import { Link, useHistory } from "react-router-dom";
 import styled from "styled-components";
+import UserContext from "../../contexts/UserContexts";
 
 export default function SignUp() {
   let history = useHistory();
@@ -11,6 +12,15 @@ export default function SignUp() {
   const [name, setName] = useState("");
   const [image, setImage] = useState("");
   const [loading, setLoading] = useState(false);
+  const { user, setUser } = useContext(UserContext);
+
+  useEffect(() => {
+    if (localStorage.user) {
+      const userStorage = JSON.parse(localStorage.user);
+      setUser(userStorage);
+      history.push("/timeline");
+    }
+  }, [user]);
 
   function newUser(event) {
     event.preventDefault();
