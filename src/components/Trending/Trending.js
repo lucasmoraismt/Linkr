@@ -139,6 +139,10 @@ const TrendingContainer = styled.div`
       }
     }
   }
+  @media (max-height: 640px) {
+    top: initial;
+    bottom: 0;
+  }
   @media (max-width: 950px) {
     right: 5px;
   }
