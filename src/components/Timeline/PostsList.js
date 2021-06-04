@@ -1,10 +1,14 @@
 import InfiniteScroll from "react-infinite-scroll-component";
 import styled from "styled-components";
 import Post from "./Post";
+import "./ModalStyle.css";
+import UserContext from "../../contexts/UserContexts";
+import { useContext } from "react";
 
 import scrollLoading from "../../assets/scrollLoading.gif";
 
-export default function PostsList({ posts, reload, hasMore }) {
+export default function PostsList({ posts, reload, hasMore, getNewPosts }) {
+  const { user } = useContext(UserContext);
   return (
     <Container>
       <InfiniteScroll
@@ -25,7 +29,15 @@ export default function PostsList({ posts, reload, hasMore }) {
       >
         {posts.map((post) => {
           const postKey = post.repostId ? post.repostId : post.id;
-          return <Post post={post} key={postKey} reload={reload} />;
+          return (
+            <Post
+              post={post}
+              key={postKey}
+              reload={reload}
+              userId={user.id}
+              getNewPosts={getNewPosts}
+            />
+          );
         })}
       </InfiniteScroll>
     </Container>

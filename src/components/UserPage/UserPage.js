@@ -54,11 +54,8 @@ export default function UserPage() {
 
     request.then((response) => {
       setUserInfo(response.data.user);
-      setIsLoading(false);
     });
     request.catch((error) => {
-      setIsLoading(false);
-      setError(true);
       alert(error.response.data.message);
     });
   }
@@ -192,26 +189,6 @@ export default function UserPage() {
     request.catch((error) => {
       alert(`Operation not possible due to ${error.response.data.message}.`);
       setLoadingFollow(false);
-    });
-  }
-
-  function getInfo() {
-    const config = {
-      headers: {
-        Authorization: `Bearer ${user.token}`,
-      },
-    };
-
-    const request = axios.get(
-      `https://mock-api.bootcamp.respondeai.com.br/api/v2/linkr/users/${userId}`,
-      config
-    );
-
-    request.then((response) => {
-      setUserInfo(response.data.user);
-    });
-    request.catch((error) => {
-      alert(error.response.data.message);
     });
   }
 

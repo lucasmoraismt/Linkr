@@ -27,6 +27,27 @@ export default function Timeline() {
     getPosts();
   }, [user]);
 
+  function getNewPosts() {
+    const latestId = posts[0].repostId ? posts[0].repostId : posts[0].id;
+    const config = {
+      headers: {
+        Authorization: `Bearer ${user.token}`,
+      },
+    };
+    const request = axios.get(
+      `https://mock-api.bootcamp.respondeai.com.br/api/v2/linkr/following/posts?earlierThan=${latestId}`,
+      config
+    );
+
+    request.then((response) => {
+      const refreshPosts = [...response.data.posts, ...posts];
+      setPosts(refreshPosts);
+    });
+    request.catch(() => {
+      alert("Could not get new posts right now");
+    });
+  }
+
   function getPosts(newPosts) {
     const config = {
       headers: {
@@ -101,7 +122,12 @@ export default function Timeline() {
           ) : posts.length === 0 ? (
             <p className="warning">You still don't follow anyone!</p>
           ) : (
-            <PostsList posts={posts} reload={getPosts} hasMore={hasMore} />
+            <PostsList
+              posts={posts}
+              reload={getPosts}
+              hasMore={hasMore}
+              getNewPosts={getNewPosts}
+            />
           )}
         </div>
         <div className="page-right"></div>

@@ -35,6 +35,7 @@ export default function LocationIndicator({ user, geolocation }) {
         <MapsFrame>
           <p>Loading location...</p>
           <iframe
+            title={"User Location"}
             loading="lazy"
             allowFullScreen
             src={`https://www.google.com/maps/embed/v1/place?q=${geolocation.latitude},${geolocation.longitude}&key=${gkey}`}

@@ -72,6 +72,27 @@ export default function MyPosts() {
     }
   }
 
+  function getNewPosts() {
+    const latestId = posts[0].repostId ? posts[0].repostId : posts[0].id;
+    const config = {
+      headers: {
+        Authorization: `Bearer ${user.token}`,
+      },
+    };
+    const request = axios.get(
+      `https://mock-api.bootcamp.respondeai.com.br/api/v2/linkr/users/${user.id}/posts?earlierThan=${latestId}`,
+      config
+    );
+
+    request.then((response) => {
+      const refreshPosts = [...response.data.posts, ...posts];
+      setPosts(refreshPosts);
+    });
+    request.catch(() => {
+      alert("Could not get new posts right now");
+    });
+  }
+
   return (
     <StyledTimeline>
       <h1>my posts</h1>
@@ -89,7 +110,12 @@ export default function MyPosts() {
           ) : posts.length === 0 ? (
             <p className="warning">You have not posted yet!</p>
           ) : (
-            <PostsList posts={posts} reload={getMyPosts} hasMore={hasMore} />
+            <PostsList
+              posts={posts}
+              reload={getMyPosts}
+              hasMore={hasMore}
+              getNewPosts={getNewPosts}
+            />
           )}
         </div>
         <div className="page-right"></div>

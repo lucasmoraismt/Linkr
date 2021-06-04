@@ -1,26 +1,27 @@
 import ReactHashtag from "react-hashtag";
-import React, { useState } from "react";
+import { useState } from "react";
+import { Link } from "react-router-dom";
+import { BiRepost } from "react-icons/bi";
 
 import PostStyle from "../Styles/PostStyle";
 
 import EditButton from "./EditButton";
 import DeleteButton from "./DeleteButton";
+import RepostButton from "./RepostButton";
 import EditArea from "./EditArea";
-
 import Likes from "../Likes/Likes";
 import CommentsButton from "../Comments/CommentsButton";
 import CommentsSection from "../Comments/CommentsSection";
 import LocationIndicator from "./LocationIndicator";
-import { Link } from "react-router-dom";
 
 import styled from "styled-components";
 import "./ModalStyle.css";
-import Modal from 'react-modal';
+import Modal from "react-modal";
 import { VscChromeClose } from "react-icons/vsc";
 
-Modal.setAppElement('#root')
+Modal.setAppElement("#root");
 
-export default function Post({ post, reload }) {
+export default function Post({ post, reload, userId, getNewPosts }) {
   const {
     linkImage,
     linkTitle,
@@ -37,7 +38,7 @@ export default function Post({ post, reload }) {
   const [loadedComments, setLoadedComments] = useState(false);
   const [alteredText, setAlteredText] = useState(text);
   const [error, setError] = useState(false);
-  const [counter, setCounter] = useState(post.commentCount);
+  const [commentCounter, setCommentCounter] = useState(post.commentCount);
   function editToggle() {
     if (isLoading) {
       return;
@@ -50,18 +51,15 @@ export default function Post({ post, reload }) {
     }
   }
 
-  var subtitle;
-  const [modalIsOpen,setIsOpen] = React.useState(false);
+  const [modalIsOpen, setIsOpen] = useState(false);
 
   function openModal() {
     setIsOpen(true);
   }
 
-  function closeModal(){
+  function closeModal() {
     setIsOpen(false);
   }
-
-
 
   return (
     <PostStyle
@@ -69,6 +67,24 @@ export default function Post({ post, reload }) {
       image={linkImage}
       showingComments={showingComments}
     >
+      {post.repostId && (
+        <div className="repost">
+          <div>
+            <BiRepost />
+            Reposted by{" "}
+            <Link to={`/user/${post.repostedBy.id}`}>
+              {post.repostedBy.id === userId ? "you" : post.repostedBy.username}
+            </Link>
+          </div>
+          {post.repostedBy.id === userId && (
+            <DeleteButton
+              postId={post.repostId}
+              userId={post.repostedBy.id}
+              reload={reload}
+            />
+          )}
+        </div>
+      )}
       <div className="post-content">
         <div className="post-left">
           <Link className="user-image" to={`/user/${user.id}`}>
@@ -77,12 +93,13 @@ export default function Post({ post, reload }) {
           <Likes post={post}></Likes>
           <CommentsButton
             post={post}
-            counter={counter}
+            counter={commentCounter}
             loadedComments={loadedComments}
             setLoadedComments={setLoadedComments}
             showingComments={showingComments}
             setShowingComments={setShowingComments}
           />
+          <RepostButton post={post} getNewPosts={getNewPosts} />
         </div>
         <div className="post-right">
           <div className="top">
@@ -145,18 +162,27 @@ export default function Post({ post, reload }) {
           >
             <Preview>
               <Top>
-                <a href={link} target="_blank" rel="noreferrer">Open in a new tab</a>
-                <VscChromeClose fontSize="24px" onClick={closeModal}/>
+                <a href={link} target="_blank" rel="noreferrer">
+                  Open in a new tab
+                </a>
+                <VscChromeClose fontSize="24px" onClick={closeModal} />
               </Top>
-              <iframe className="i-frame"
-                title="preview" 
-                src={link}    
+              <iframe
+                className="i-frame"
+                title="preview"
+                src={link}
                 loading="lazy"
                 fullscreen
               ></iframe>
-            </Preview>  
+            </Preview>
           </Modal>
-          <a href={link} className="link" target="_blank" rel="noreferrer" onMouseDown={openModal}>
+          <a
+            href={link}
+            className="link"
+            target="_blank"
+            rel="noreferrer"
+            onMouseDown={openModal}
+          >
             <div className="texts">
               <p className="link-title">{linkTitle}</p>
               <p className="link-description">{linkDescription}</p>
@@ -168,7 +194,7 @@ export default function Post({ post, reload }) {
       </div>
       <div className="comment-section">
         {loadedComments ? (
-          <CommentsSection post={post} setCounter={setCounter} />
+          <CommentsSection post={post} setCounter={setCommentCounter} />
         ) : null}
       </div>
     </PostStyle>
@@ -180,19 +206,19 @@ const Preview = styled.div`
   justify-content: center;
   align-items: center;
   padding: 0 16px;
-  
+
   .i-frame {
     background: white;
     width: 100%;
-    height: 520px; 
+    height: 520px;
     margin-bottom: 20px;
   }
 
   @media (max-width: 780px) {
-      margin-top: 10px;
-      margin-bottom: 30px;
-      height: 500px;
-    }
+    margin-top: 10px;
+    margin-bottom: 30px;
+    height: 500px;
+  }
 `;
 const Top = styled.div`
   display: flex;
@@ -201,14 +227,13 @@ const Top = styled.div`
   width: 100%;
   padding: 10px 0;
 
-    a {
-      width: 138px;
-      height: 31px;
-      background: #1877F2;
-      border-radius: 5px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    
+  a {
+    width: 138px;
+    height: 31px;
+    background: #1877f2;
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
 `;

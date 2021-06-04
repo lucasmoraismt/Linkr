@@ -7,6 +7,34 @@ const PostStyle = styled.div`
   border-radius: 16px;
   transition: 0.5s;
 
+  @media (max-width: 740px) {
+    border-radius: 0px;
+  }
+
+  div.repost {
+    height: 33px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    color: #ffffff;
+    padding: 0px 13px;
+    div {
+      display: flex;
+      align-items: center;
+      margin-left: 6px;
+      font-size: 11px;
+      line-height: 13px;
+      svg {
+        font-size: 22px;
+        margin-right: 5px;
+      }
+      a {
+        margin-left: 3px;
+        font-weight: bold;
+      }
+    }
+  }
+
   .post-content {
     display: flex;
     width: 100%;
@@ -146,7 +174,7 @@ const PostStyle = styled.div`
       }
     }
     @media (max-width: 740px) {
-      margin-top: 15px;
+      margin-top: 0px;
       padding: 10px;
       border-radius: 0px;
 
