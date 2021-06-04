@@ -44,7 +44,10 @@ export default function Header() {
     <>
       <LoadingOverlay user={user} isLoading={isLoading} />
       <StyledHeader>
-        <Link to="/timeline">
+        <Link
+          to="/timeline"
+          onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+        >
           <Logo>linkr</Logo>
         </Link>
         <ShowMenuButton onClick={toggleMenu}>
