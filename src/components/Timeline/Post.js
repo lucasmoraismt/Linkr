@@ -166,7 +166,16 @@ export default function Post({ post, getPosts, userId, removePost }) {
               <VideoPlayer>
                 <ReactPlayer
                   url={post.link}
-                  controls="true"
+                  config={{
+                    youtube: {
+                      playerVars: {
+                        showinfo: 1,
+                        host: "https://www.youtube.com",
+                        origin: window.location.origin,
+                      },
+                    },
+                  }}
+                  controls={true}
                   width="100%"
                   height="100%"
                 />{" "}

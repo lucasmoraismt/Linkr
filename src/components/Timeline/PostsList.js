@@ -17,7 +17,7 @@ export default function PostsList({ posts, getPosts, hasMore, removePost }) {
         hasMore={hasMore}
         loader={
           <MorePosts>
-            <img src={scrollLoading} />
+            <img src={scrollLoading} alt="loading gif" />
             <p className="loading-title">Loading more posts...</p>
           </MorePosts>
         }

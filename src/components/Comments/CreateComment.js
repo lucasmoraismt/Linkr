@@ -1,7 +1,7 @@
 import axios from "axios";
 import { IoPaperPlaneOutline } from "react-icons/io5";
 import styled from "styled-components";
-import { useContext, useEffect, useRef, useState } from "react";
+import { useContext, useState } from "react";
 import UserContext from "../../contexts/UserContexts";
 import Avatar from "./Avatar";
 
