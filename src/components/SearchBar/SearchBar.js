@@ -177,6 +177,11 @@ const ContainerShow = styled.div`
       }
     }
   }
+  @media (max-width: 860px) {
+    div {
+      font-size: 15px;
+    }
+  }
 `;
 
 const ContainerSearch = styled.div`
