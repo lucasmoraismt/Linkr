@@ -166,10 +166,19 @@ export default function Post({ post, getPosts, userId, removePost }) {
               <VideoPlayer>
                 <ReactPlayer
                   url={post.link}
-                  controls="true"
+                  config={{
+                    youtube: {
+                      playerVars: {
+                        showinfo: 1,
+                        host: "https://www.youtube.com",
+                        origin: "https://linkr-pll.vercel.app",
+                      },
+                    },
+                  }}
+                  controls={true}
                   width="100%"
                   height="100%"
-                />{" "}
+                />
               </VideoPlayer>
               <a href={post.link} target="_blank" rel="noreferrer">
                 {post.link}
