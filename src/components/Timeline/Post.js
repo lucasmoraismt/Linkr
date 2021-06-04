@@ -178,7 +178,7 @@ export default function Post({ post, getPosts, userId, removePost }) {
                   controls={true}
                   width="100%"
                   height="100%"
-                />{" "}
+                />
               </VideoPlayer>
               <a href={post.link} target="_blank" rel="noreferrer">
                 {post.link}
