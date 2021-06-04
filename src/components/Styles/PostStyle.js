@@ -116,7 +116,8 @@ const PostStyle = styled.div`
         font-weight: bold;
         color: #fff;
       }
-      a.link {
+      div.link {
+        cursor: pointer;
         width: 100%;
         border: 1px solid #4d4d4d;
         border-radius: 11px;
@@ -201,7 +202,7 @@ const PostStyle = styled.div`
           font-size: 15px;
           line-height: 18px;
         }
-        a.link {
+        div.link {
           .texts {
             margin: 8px;
             max-width: calc(100% - 110px);

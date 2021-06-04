@@ -8,7 +8,7 @@ import "./ModalStyle.css";
 
 Modal.setAppElement("#root");
 
-export default function DeleteButton({ postId, userId, reload }) {
+export default function DeleteButton({ postId, userId, repost, removePost }) {
   const { user } = useContext(UserContext);
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -32,7 +32,7 @@ export default function DeleteButton({ postId, userId, reload }) {
     deletePostRequest.then(() => {
       toggleModal();
       setIsLoading(false);
-      reload();
+      removePost(repost, postId);
     });
     deletePostRequest.catch(() => {
       setError(true);

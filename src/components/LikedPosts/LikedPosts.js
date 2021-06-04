@@ -11,65 +11,56 @@ export default function LikedPosts() {
   const [isLoading, setIsLoading] = useState(true);
   const [hasMore, setHasMore] = useState(true);
   const [error, setError] = useState(false);
-  const { user, setUser } = useContext(UserContext);
+  const { user } = useContext(UserContext);
 
   useEffect(() => {
-    if (!user) {
-      if (localStorage.user) {
-        const userStorage = JSON.parse(localStorage.user);
-        setUser(userStorage);
-        return;
-      }
+    if (user) {
+      getPosts();
     }
-    getPosts();
   }, [user]);
 
-  function getPosts() {
+  function getPosts(earlier, reset) {
+    if (earlier || reset) {
+      return;
+    }
     const config = {
       headers: {
         Authorization: `Bearer ${user.token}`,
       },
     };
-
+    let url = `https://mock-api.bootcamp.respondeai.com.br/api/v2/linkr/posts/liked`;
     if (posts && posts.length > 0) {
-      const request = axios.get(
-        `https://mock-api.bootcamp.respondeai.com.br/api/v2/linkr/posts/liked?olderThan=${
-          posts[posts.length - 1].id
-        }`,
-        config
-      );
-
-      request.then((response) => {
-        if (response.data.posts.length < 10) {
-          setHasMore(false);
-        }
-        const refreshPosts = [...posts, ...response.data.posts];
-        setPosts(refreshPosts);
-        setIsLoading(false);
-      });
-      request.catch((error) => {
-        setHasMore(false);
-        setIsLoading(false);
-        setError(true);
-      });
-    } else {
-      const request = axios.get(
-        "https://mock-api.bootcamp.respondeai.com.br/api/v2/linkr/posts/liked",
-        config
-      );
-
-      request.then((response) => {
-        if (response.data.posts.length < 10) {
-          setHasMore(false);
-        }
-        setPosts(response.data.posts);
-        setIsLoading(false);
-      });
-      request.catch((error) => {
-        setIsLoading(false);
-        setError(true);
-      });
+      url = `${url}?offset=${posts.length}`;
     }
+    const request = axios.get(url, config);
+    let refreshPosts;
+    request.then((response) => {
+      refreshPosts = posts
+        ? [...posts, ...response.data.posts]
+        : [...response.data.posts];
+      if (response.data.posts.length < 10) {
+        setHasMore(false);
+      }
+      setPosts(refreshPosts);
+      setIsLoading(false);
+    });
+
+    request.catch(() => {
+      setHasMore(false);
+      setIsLoading(false);
+      setError(true);
+    });
+  }
+
+  function removePost(repost, id) {
+    let filteredPosts = [];
+    if (repost) {
+      filteredPosts = posts.filter((p) => p.repostId !== id);
+    } else {
+      filteredPosts = posts.filter((p) => p.id !== id);
+    }
+    const refreshPosts = [...filteredPosts];
+    setPosts(refreshPosts);
   }
 
   return (
@@ -77,8 +68,9 @@ export default function LikedPosts() {
       <h1>my likes</h1>
       <div className="main-content">
         <div className="page-left">
-          {isLoading ? <Loading /> : ""}
-          {posts === null ? (
+          {isLoading ? (
+            <Loading />
+          ) : posts === null ? (
             error ? (
               <p className="warning">
                 Could not get posts right now. Please try again.
@@ -89,7 +81,12 @@ export default function LikedPosts() {
           ) : posts.length === 0 ? (
             <p className="warning">No liked posts yet!</p>
           ) : (
-            <PostsList posts={posts} reload={getPosts} hasMore={hasMore} />
+            <PostsList
+              posts={posts}
+              getPosts={getPosts}
+              hasMore={hasMore}
+              removePost={removePost}
+            />
           )}
         </div>
         <div className="page-right"></div>

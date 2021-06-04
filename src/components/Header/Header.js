@@ -3,17 +3,29 @@ import { Link, useHistory } from "react-router-dom";
 import styled from "styled-components";
 import UserContext from "../../contexts/UserContexts";
 
-import SearchBar from "../SearchBar/SearchBar";
-
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const history = useHistory();
   const { user, setUser } = useContext(UserContext);
   const [avatar, setAvatar] = useState("");
-
+  const [isLoading, setLoading] = useState(true);
   useEffect(() => {
+    if (!user) {
+      if (localStorage.user) {
+        const userStorage = JSON.parse(localStorage.user);
+        setUser(userStorage);
+        return;
+      } else {
+        history.push("/");
+        return;
+      }
+    }
     if (user) {
       setAvatar(user ? user.avatar : "");
+      setTimeout(() => {
+        setLoading(false);
+      }, 500);
+      return;
     }
   }, [user]);
 
@@ -30,11 +42,14 @@ export default function Header() {
 
   return (
     <>
+      <LoadingOverlay user={user} isLoading={isLoading} />
       <StyledHeader>
-        <Link to="/timeline">
+        <Link
+          to="/timeline"
+          onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+        >
           <Logo>linkr</Logo>
         </Link>
-        <SearchBar/>
         <ShowMenuButton onClick={toggleMenu}>
           <Chevron isMenuOpen={isMenuOpen} /> <UserImage avatar={avatar} />
         </ShowMenuButton>
@@ -55,6 +70,18 @@ export default function Header() {
     </>
   );
 }
+const LoadingOverlay = styled.div`
+  top: 0;
+  bottom: 0px;
+  left: 0;
+  right: 0;
+  transition: 0.5s;
+  z-index: 10;
+  position: fixed;
+  background-color: #333333;
+  opacity: ${(props) => (props.user ? "0" : "1")};
+  display: ${(props) => (props.isLoading ? "block" : "none")};
+`;
 const Logo = styled.h1`
   font-family: Passion One;
   font-weight: bold;

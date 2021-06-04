@@ -5,92 +5,89 @@ import UserContext from "../../contexts/UserContexts";
 import Loading from "../Loading/Loading";
 import StyledTimeline from "../Styles/StyledTimeline";
 import PostsList from "../Timeline/PostsList";
+import useInterval from "../useInterval/useInterval";
 
 export default function MyPosts() {
   const [posts, setPosts] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [hasMore, setHasMore] = useState(true);
   const [error, setError] = useState(false);
-  const { user, setUser } = useContext(UserContext);
+  const { user } = useContext(UserContext);
 
   useEffect(() => {
-    if (!user) {
-      if (localStorage.user) {
-        const userStorage = JSON.parse(localStorage.user);
-        setUser(userStorage);
-        return;
-      }
+    if (user) {
+      getPosts();
     }
-    getMyPosts();
   }, [user]);
 
-  function getMyPosts() {
+  function getPosts(earlier, reset) {
     const config = {
       headers: {
         Authorization: `Bearer ${user.token}`,
       },
     };
-
-    if (posts && posts.length > 0) {
-      const request = axios.get(
-        `https://mock-api.bootcamp.respondeai.com.br/api/v2/linkr/users/${
-          user.id
-        }/posts?olderThan=${posts[posts.length - 1].id}`,
-        config
-      );
-
-      request.then((response) => {
-        if (response.data.posts.length < 10) {
-          setHasMore(false);
+    let url = `https://mock-api.bootcamp.respondeai.com.br/api/v2/linkr/users/${user.id}/posts`;
+    let referenceId;
+    if (!reset) {
+      if (earlier) {
+        if (posts) {
+          referenceId = posts[0].repostId ? posts[0].repostId : posts[0].id;
+          url = `${url}?earlierThan=${referenceId}`;
         }
-        const refreshPosts = [...posts, ...response.data.posts];
-        setPosts(refreshPosts);
-        setIsLoading(false);
-      });
-      request.catch((error) => {
-        setHasMore(false);
-        setIsLoading(false);
-        setError(true);
-      });
-    } else {
-      const request = axios.get(
-        `https://mock-api.bootcamp.respondeai.com.br/api/v2/linkr/users/${user.id}/posts`,
-        config
-      );
-
-      request.then((response) => {
-        if (response.data.posts.length < 10) {
-          setHasMore(false);
+      } else {
+        if (posts && posts.length > 0) {
+          referenceId = posts[posts.length - 1].repostId
+            ? posts[posts.length - 1].repostId
+            : posts[posts.length - 1].id;
+          url = `${url}?olderThan=${referenceId}`;
         }
-        setPosts(response.data.posts);
-        setIsLoading(false);
-      });
-      request.catch((error) => {
-        setIsLoading(false);
-        setError(true);
-      });
+      }
     }
+    const request = axios.get(url, config);
+    let refreshPosts;
+    request.then((response) => {
+      if (earlier && !reset) {
+        if (posts) {
+          refreshPosts = [...response.data.posts, ...posts];
+        } else {
+          refreshPosts = [...response.data.posts];
+        }
+      } else {
+        if (reset) {
+          refreshPosts = [...response.data.posts];
+        } else {
+          refreshPosts = posts
+            ? [...posts, ...response.data.posts]
+            : [...response.data.posts];
+        }
+        if (response.data.posts.length < 10) {
+          setHasMore(false);
+        }
+      }
+      setPosts(refreshPosts);
+      setIsLoading(false);
+    });
+
+    request.catch(() => {
+      setHasMore(false);
+      setIsLoading(false);
+      setError(true);
+    });
   }
 
-  function getNewPosts() {
-    const latestId = posts[0].repostId ? posts[0].repostId : posts[0].id;
-    const config = {
-      headers: {
-        Authorization: `Bearer ${user.token}`,
-      },
-    };
-    const request = axios.get(
-      `https://mock-api.bootcamp.respondeai.com.br/api/v2/linkr/users/${user.id}/posts?earlierThan=${latestId}`,
-      config
-    );
+  useInterval(() => {
+    getPosts(true);
+  }, 15000);
 
-    request.then((response) => {
-      const refreshPosts = [...response.data.posts, ...posts];
-      setPosts(refreshPosts);
-    });
-    request.catch(() => {
-      alert("Could not get new posts right now");
-    });
+  function removePost(repost, id) {
+    let filteredPosts = [];
+    if (repost) {
+      filteredPosts = posts.filter((p) => p.repostId !== id);
+    } else {
+      filteredPosts = posts.filter((p) => p.id !== id);
+    }
+    const refreshPosts = [...filteredPosts];
+    setPosts(refreshPosts);
   }
 
   return (
@@ -98,8 +95,9 @@ export default function MyPosts() {
       <h1>my posts</h1>
       <div className="main-content">
         <div className="page-left">
-          {isLoading ? <Loading /> : ""}
-          {posts === null ? (
+          {isLoading ? (
+            <Loading />
+          ) : posts === null ? (
             error ? (
               <p className="warning">
                 Could not get posts right now. Please try again.
@@ -112,9 +110,9 @@ export default function MyPosts() {
           ) : (
             <PostsList
               posts={posts}
-              reload={getMyPosts}
+              getPosts={getPosts}
               hasMore={hasMore}
-              getNewPosts={getNewPosts}
+              removePost={removePost}
             />
           )}
         </div>

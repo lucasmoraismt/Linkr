@@ -21,7 +21,7 @@ import { VscChromeClose } from "react-icons/vsc";
 
 Modal.setAppElement("#root");
 
-export default function Post({ post, reload, userId, getNewPosts }) {
+export default function Post({ post, getPosts, userId, removePost }) {
   const {
     linkImage,
     linkTitle,
@@ -38,7 +38,9 @@ export default function Post({ post, reload, userId, getNewPosts }) {
   const [loadedComments, setLoadedComments] = useState(false);
   const [alteredText, setAlteredText] = useState(text);
   const [error, setError] = useState(false);
+  const [modalIsOpen, setIsOpen] = useState(false);
   const [commentCounter, setCommentCounter] = useState(post.commentCount);
+
   function editToggle() {
     if (isLoading) {
       return;
@@ -50,8 +52,6 @@ export default function Post({ post, reload, userId, getNewPosts }) {
       setIsEditing(true);
     }
   }
-
-  const [modalIsOpen, setIsOpen] = useState(false);
 
   function openModal() {
     setIsOpen(true);
@@ -80,7 +80,8 @@ export default function Post({ post, reload, userId, getNewPosts }) {
             <DeleteButton
               postId={post.repostId}
               userId={post.repostedBy.id}
-              reload={reload}
+              repost={true}
+              removePost={removePost}
             />
           )}
         </div>
@@ -99,7 +100,7 @@ export default function Post({ post, reload, userId, getNewPosts }) {
             showingComments={showingComments}
             setShowingComments={setShowingComments}
           />
-          <RepostButton post={post} getNewPosts={getNewPosts} />
+          <RepostButton post={post} getPosts={getPosts} />
         </div>
         <div className="post-right">
           <div className="top">
@@ -122,7 +123,12 @@ export default function Post({ post, reload, userId, getNewPosts }) {
                 setError={setError}
                 setIsEditing={setIsEditing}
               />
-              <DeleteButton postId={id} userId={user.id} reload={reload} />
+              <DeleteButton
+                postId={id}
+                userId={user.id}
+                removePost={removePost}
+                repost={false}
+              />
             </div>
           </div>
           <p className="user-text">
@@ -176,20 +182,14 @@ export default function Post({ post, reload, userId, getNewPosts }) {
               ></iframe>
             </Preview>
           </Modal>
-          <a
-            href={link}
-            className="link"
-            target="_blank"
-            rel="noreferrer"
-            onMouseDown={openModal}
-          >
+          <div className="link" onClick={openModal}>
             <div className="texts">
               <p className="link-title">{linkTitle}</p>
               <p className="link-description">{linkDescription}</p>
               <p className="link-url">{link}</p>
             </div>
             <div className="image"></div>
-          </a>
+          </div>
         </div>
       </div>
       <div className="comment-section">
@@ -235,5 +235,8 @@ const Top = styled.div`
     display: flex;
     align-items: center;
     justify-content: center;
+  }
+  svg {
+    cursor: pointer;
   }
 `;

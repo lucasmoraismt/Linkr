@@ -44,9 +44,9 @@ const StyledTimeline = styled.div`
       margin-bottom: 19px;
       font-size: 33px;
     }
-    .userpagefix {
-      padding-left: 0;
-    }
+  }
+  @media (max-width: 600px) {
+    margin-top: 125px;
   }
 `;
 
